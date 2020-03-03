@@ -53,7 +53,7 @@ exports.createConfession = (req, res, next) => {
 
     // if imageUrl is blank, give it a default value
     if(imageUrl === '' || !imageUrl) {
-        imageUrl = 'http://localhost:8081/img/66006-bigstock-confession-concept-42406879.jpg';
+        imageUrl = '@/img/66006-bigstock-confession-concept-42406879.jpg';
     }
 
     // get user
