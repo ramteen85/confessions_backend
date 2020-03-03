@@ -53,7 +53,7 @@ exports.createConfession = (req, res, next) => {
 
     // if imageUrl is blank, give it a default value
     if(imageUrl === '' || !imageUrl) {
-        imageUrl = 'https://ramteen85.github.io/confessions_frontend_published/img/66006-bigstock-confession-concept-42406879.jpg';
+        imageUrl = 'https://ramteen85.github.io/confessions_frontend_published/#/img/66006-bigstock-confession-concept-42406879.jpg';
     }
 
     // get user
