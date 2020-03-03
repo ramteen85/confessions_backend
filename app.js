@@ -6,6 +6,8 @@ const bodyParser = require('body-parser');
 const mongoose = require('mongoose');
 const multer = require('multer');
 const cors = require('cors');
+const helmet = require('helmet');
+const compression = require('compression');
 
 // socket.io
 const server = require('http').createServer(app);
@@ -22,6 +24,8 @@ const authRoutes = require('./routes/auth');
 const confessionRoutes = require('./routes/confession');
 const messageRoutes = require('./routes/message');
 
+app.use(helmet());
+app.use(compression());
 
 const PORT = process.env.PORT || 8080;
 
