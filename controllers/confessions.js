@@ -33,7 +33,7 @@ exports.createConfession = (req, res, next) => {
     // verify token
     let decodedToken;
     try {
-        decodedToken = jwt.verify(token, 'somesupersupersecretkey')
+        decodedToken = jwt.verify(token, `${process.env.SECRET_KEY}`)
     } catch(err) {
         err.statusCode = 500;
         throw err;
@@ -117,7 +117,7 @@ exports.getLatestConfessions = (req, res, next) => {
     // verify token
     let decodedToken;
     try {
-        decodedToken = jwt.verify(token, 'somesupersupersecretkey')
+        decodedToken = jwt.verify(token, `${process.env.SECRET_KEY}`)
     } catch(err) {
         err.statusCode = 500;
         throw err;
@@ -152,7 +152,7 @@ exports.getPopularConfessions = (req, res, next) => {
     // verify token
     let decodedToken;
     try {
-        decodedToken = jwt.verify(token, 'somesupersupersecretkey')
+        decodedToken = jwt.verify(token, process.env.SECRET_KEY)
     } catch(err) {
         err.statusCode = 500;
         throw err;
@@ -163,7 +163,7 @@ exports.getPopularConfessions = (req, res, next) => {
     const perPage = 8;
 
     Confession.find()
-    .sort({totalHearts: 'desc'})
+    .sort({popScore: 'desc'})
     .select("totalHearts totalHates subject content imageUrl _id createdAt")
     .populate("creator", 'nickname location')
     .skip((currentPage - 1) * perPage)
@@ -187,7 +187,7 @@ exports.getHatedConfessions = (req, res, next) => {
     // verify token
     let decodedToken;
     try {
-        decodedToken = jwt.verify(token, 'somesupersupersecretkey')
+        decodedToken = jwt.verify(token, process.env.SECRET_KEY)
     } catch(err) {
         err.statusCode = 500;
         throw err;
@@ -198,7 +198,7 @@ exports.getHatedConfessions = (req, res, next) => {
     const perPage = 8;
 
     Confession.find()
-    .sort({totalHates: 'desc'})
+    .sort({popScore: 'asc'})
     .select("totalHearts totalHates subject content imageUrl _id createdAt")
     .populate("creator", 'nickname location')
     .skip((currentPage - 1) * perPage)
@@ -215,6 +215,41 @@ exports.getHatedConfessions = (req, res, next) => {
     });
 }
 
+exports.saveDistance = (req, res, next) => {
+    // get token
+    token = req.body.token;
+
+    // verify token
+    let decodedToken;
+    try {
+        decodedToken = jwt.verify(token, process.env.SECRET_KEY)
+    } catch(err) {
+        err.statusCode = 500;
+        throw err;
+    }
+
+    // get distance
+    let distance = req.body.distance;
+
+    user = User.findById(decodedToken.userId)
+    .then(usr => {
+        usr.distance = distance;
+        usr.save()
+        .then(() => {
+            res.status(200).json({
+                message: "ok"
+            });
+        })
+        .catch(err => {
+            next(err);
+        });
+    })
+    .catch(err => {
+        console.log(err);
+    })
+}
+
+
 exports.getNearestConfessions = (req, res, next) => {
     // get token
     token = req.body.confData.token;
@@ -222,7 +257,7 @@ exports.getNearestConfessions = (req, res, next) => {
     // verify token
     let decodedToken;
     try {
-        decodedToken = jwt.verify(token, 'somesupersupersecretkey')
+        decodedToken = jwt.verify(token, process.env.SECRET_KEY)
     } catch(err) {
         err.statusCode = 500;
         throw err;
@@ -231,10 +266,11 @@ exports.getNearestConfessions = (req, res, next) => {
     //variables
     const currentPage = req.body.confData.page || 1;
     const perPage = 8;
+    let distance;
 
     user = User.findById(decodedToken.userId)
             .then(usr => {
-                let distance = req.body.confData.distance * 1000;
+                distance = usr.distance * 1000;
                 Confession.find(
                 {
                     location: {
@@ -256,7 +292,8 @@ exports.getNearestConfessions = (req, res, next) => {
                     // return response
                     res.status(200).json({
                         message: 'Confessions fetched!',
-                        confessions: confessions
+                        confessions: confessions,
+                        distance: distance / 1000
                     });
                 })
                 .catch(err => {
@@ -282,32 +319,45 @@ exports.getConfession = (req, res, next) => {
     // verify token
     let decodedToken;
     try {
-        decodedToken = jwt.verify(token, 'somesupersupersecretkey')
+        decodedToken = jwt.verify(token, process.env.SECRET_KEY)
     } catch(err) {
         err.statusCode = 500;
         throw err;
     }
 
-    // get the confession
-    Confession.findOne({_id: id}, function(err, conf){
-        if (err){
+    let usrlat = 0;
+    let usrlng = 0;
+
+    user = User.findById(decodedToken.userId)
+    .then(usr => {
+        usrlat = usr.location.coordinates[1];
+        usrlng = usr.location.coordinates[0];
+        // get the confession
+        Confession.findOne({_id: id}, function(err, conf){
+            if (err){
+                err.statusCode = 500;
+                throw err;
+            }else{
+                // found confession
+                confession = conf;
+                return confession;
+            }
+        })
+        .populate("creator", "nickname location _id")
+        .then(confession => {
+
+            res.status(200).json({
+                confession: confession,
+                distance: distance(usrlng, usrlat, confession.location.coordinates[0], confession.location.coordinates[1], "K")
+            });
+        })
+        .catch(err => {
             err.statusCode = 500;
             throw err;
-        }else{
-            // found confession
-            confession = conf;
-            return confession;
-        }
-    })
-    .populate("creator", "nickname lat lng _id")
-    .then(confession => {
-        res.status(200).json({
-            confession: confession
         });
     })
     .catch(err => {
-        err.statusCode = 500;
-        throw err;
+        next(err);
     })
 };
 
@@ -320,7 +370,7 @@ exports.heartPost = (req, res, next) => {
     // verify token
     let decodedToken;
     try {
-        decodedToken = jwt.verify(token, 'somesupersupersecretkey')
+        decodedToken = jwt.verify(token, process.env.SECRET_KEY)
     } catch(err) {
         err.statusCode = 500;
         throw err;
@@ -343,7 +393,6 @@ exports.heartPost = (req, res, next) => {
         }
     })
     .then(confession => {
-        console.log(decodedToken);
         if(confession.usersHearted.includes(decodedToken.userId) === false) {
             if(confession.usersHated.includes(decodedToken.userId) === true) {
                 tempIndex = confession.usersHated.indexOf(decodedToken.userId);
@@ -358,6 +407,9 @@ exports.heartPost = (req, res, next) => {
             confession.usersHearted.splice(index, 1);
         }
 
+        confession.popScore = confession.totalHearts - confession.totalHates;
+
+
         confession.save();
 
         return confession;
@@ -369,6 +421,9 @@ exports.heartPost = (req, res, next) => {
                hearts: confession.totalHearts,
                hates: confession.totalHates
            });
+    })
+    .catch(err => {
+        next(err);
     });
 }
 
@@ -381,7 +436,7 @@ exports.hatePost = (req, res, next) => {
     // verify token
     let decodedToken;
     try {
-        decodedToken = jwt.verify(token, 'somesupersupersecretkey')
+        decodedToken = jwt.verify(token, process.env.SECRET_KEY)
     } catch(err) {
         err.statusCode = 500;
         throw err;
@@ -417,6 +472,8 @@ exports.hatePost = (req, res, next) => {
             confession.usersHated.splice(index, 1);
         }
 
+        confession.popScore = confession.totalHearts - confession.totalHates;
+
         confession.save();
 
         return confession;
@@ -440,7 +497,7 @@ exports.deleteConfession = (req, res, next) => {
     // verify token
     let decodedToken;
     try {
-        decodedToken = jwt.verify(token, 'somesupersupersecretkey')
+        decodedToken = jwt.verify(token, process.env.SECRET_KEY)
     } catch(err) {
         err.statusCode = 500;
         throw err;

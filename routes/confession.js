@@ -9,7 +9,10 @@ const router = express.Router();
 // create a confession
 router.post('/new', confessionsController.createConfession);
 
-// get all confessions
+// save distance for nearest confessions
+router.post('/closest/sd', confessionsController.saveDistance);
+
+// get nearest confessions
 router.post('/closest', confessionsController.getNearestConfessions);
 
 // get the most popular confessions

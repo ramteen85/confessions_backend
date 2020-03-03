@@ -1,4 +1,6 @@
 const User = require('../models/user');
+const Conversation = require('../models/conversation');
+const Message = require('../models/message');
 const { validationResult } = require('express-validator');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
@@ -41,7 +43,7 @@ exports.register = (req, res, next) => {
             email: result.email,
             userId: result._id.toString()
         },
-            'somesupersupersecretkey',
+            `${process.env.SECRET_KEY}`,
             { expiresIn: '12h' }
         );
 
@@ -65,12 +67,12 @@ exports.saveTrueUserLoc = (req, res, next) => {
     token = req.body.data.token;
     lat = req.body.data.lat;
     lng = req.body.data.lng;
-    api = 'AIzaSyCLoIlBg2zf0vi84JP9MMrJahZgMN89Qj8';
+    api = process.env.GOOGLE_API_KEY;
 
     // verify token
     let decodedToken;
     try {
-        decodedToken = jwt.verify(token, 'somesupersupersecretkey')
+        decodedToken = jwt.verify(token, process.env.SECRET_KEY)
     } catch(err) {
         err.statusCode = 500;
         throw err;
@@ -150,17 +152,17 @@ exports.saveRoughUserLoc = (req, res, next) => {
     // verify token
     let decodedToken;
     try {
-        decodedToken = jwt.verify(token, 'somesupersupersecretkey')
+        decodedToken = jwt.verify(token, process.env.SECRET_KEY)
     } catch(err) {
         err.statusCode = 500;
         throw err;
     }
 
     // now need to get geolocation from ip
-    axios.get('http://www.geoplugin.net/json.gp?ip=' + ip)
+    axios.get(`${process.env.GEOSITE}?ip=` + ip)
     .then(result => {
         // success managed to get location without permission (not accurate though - save later!)!
-        console.log('got location!');
+        // console.log('got location!');
 
         // get user records
         User.findOne({_id: decodedToken.userId})
@@ -170,6 +172,7 @@ exports.saveRoughUserLoc = (req, res, next) => {
             // should check to see if a true location exists. if so, push existing location to location array
             if(usr.trueLoc === true) {
                 // true location exists
+
                 // arrayTemp = usr.prevLocs || [];
                 // arrayTemp.push({
                 //     trueLoc: usr.trueLoc,
@@ -239,7 +242,7 @@ exports.getUserLoc = (req, res, next) => {
     // verify token
     let decodedToken;
     try {
-        decodedToken = jwt.verify(token, 'somesupersupersecretkey')
+        decodedToken = jwt.verify(token, process.env.SECRET_KEY)
     } catch(err) {
         err.statusCode = 500;
         next(err)
@@ -281,7 +284,7 @@ exports.getUserById = (req, res, next) => {
      // verify token
      let decodedToken;
      try {
-         decodedToken = jwt.verify(token, 'somesupersupersecretkey')
+         decodedToken = jwt.verify(token, process.env.SECRET_KEY)
      } catch(err) {
          res.status(200).json({
              message: "An error occurred"
@@ -289,13 +292,16 @@ exports.getUserById = (req, res, next) => {
      }
 
      const user = User.findById(id)
+            .populate('confessionsList')
+            .populate('chatList')
             .then(result => {
                 console.log("id: " + id);
                 console.log(result);
                 res.json({
                     user: {
                         _id: result._id,
-                        nickname: result.nickname
+                        nickname: result.nickname,
+                        chatList: result.chatList
                     }
                 });
             })
@@ -303,6 +309,62 @@ exports.getUserById = (req, res, next) => {
                 err.statusCode = 500;
                 throw err;
             });
+
+}
+
+exports.getChatList = async(req, res, next) => {
+
+    token = req.body.data.token;
+
+    // verify token
+    let decodedToken;
+    try {
+        decodedToken = jwt.verify(token, process.env.SECRET_KEY)
+    } catch(err) {
+        res.status(200).json({
+            message: "An error occurred"
+        });
+    }
+
+    console.log(decodedToken.userId);
+
+    userId = decodedToken.userId;
+
+    Message.find({
+        $or: [
+            {receiver: userId},
+            {sender: userId}
+        ]
+    })
+    .select('message conversationId sender receiver')
+    .then( data => {
+        if(data === null)
+        {
+            res.status(200).json({
+              error: "No Conversation Exists",
+              messages: {
+                message: []
+              }
+
+            });
+        }
+        if(data) {
+            let finaldata = [];
+            for(let i = 0; i < data.length; i++) {
+                if(userId === data[i].sender || userId === data[i].receiver) {
+                    finaldata.push(data[i]);
+                }
+            }
+            res.status(200).json({
+                message: 'Conversations Returned!',
+                conversations: finaldata
+            });
+        }
+
+    })
+    .catch(err => {
+        console.log(err);
+    });
 
 }
 
@@ -333,7 +395,7 @@ exports.login = (req, res, next) => {
             email: loadedUser.email,
             userId: loadedUser._id.toString()
         },
-            'somesupersupersecretkey',
+            process.env.SECRET_KEY,
             { expiresIn: '12h' }
         );
         res.status(200).json({ token: token, userId: loadedUser._id.toString() });
@@ -345,3 +407,32 @@ exports.login = (req, res, next) => {
         next(err);
     });
 };
+
+exports.getAllUsers = (req, res, next) => {
+
+    token = req.body.data.token;
+
+    // verify token
+    let decodedToken;
+    try {
+        decodedToken = jwt.verify(token, process.env.SECRET_KEY)
+    } catch(err) {
+        err.statusCode = 500;
+        next(err)
+    }
+
+    User.find({})
+    .populate('confessionsList')
+    .populate('chatList')
+    .then(users => {
+        console.log(users);
+        res.status(200).json({
+            message: 'All users',
+            users: users
+        });
+    })
+    .catch(err => {
+        err.statusCode = 500;
+        next(err);
+    })
+}

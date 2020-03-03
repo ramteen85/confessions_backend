@@ -40,6 +40,13 @@ router.post('/saveTrueUserLoc', authController.saveTrueUserLoc);
 router.post('/saveRoughUserLoc', authController.saveRoughUserLoc);
 
 // get user by name
-router.post('/getUserById', authController.getUserById)
+router.post('/getUserById', authController.getUserById);
+
+// get all users
+router.post('/getAllUsers', authController.getAllUsers);
+
+// get chat list
+router.post('/getChatList', authController.getChatList);
+
 
 module.exports = router;

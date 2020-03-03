@@ -2,16 +2,25 @@ const jwt = require('jsonwebtoken');
 const Message = require('../models/message');
 const Conversation = require('../models/conversation');
 const User = require('../models/user');
+const Helper = require('../helpers/helpers');
 
 module.exports = {
     async getAllMessages(req, res, next) {
-        console.log('getAllMessages()');
+
+
+        // verify token
+        let decodedToken;
+        try {
+            decodedToken = jwt.verify(token, process.env.SECRET_KEY);
+        } catch(err) {
+            err.statusCode = 500;
+            next(err)
+        }
+
         const {senderId, receiverId} = req.params;
 
         const sender = await User.findById(senderId);
         const receiver = await User.findById(receiverId);
-
-        console.log('sender', sender);
 
         Conversation.findOne({
             $or: [
@@ -72,7 +81,7 @@ module.exports = {
         // verify token
         let decodedToken;
         try {
-            decodedToken = jwt.verify(token, 'somesupersupersecretkey')
+            decodedToken = jwt.verify(token, process.env.SECRET_KEY);
         } catch(err) {
             err.statusCode = 500;
             next(err)
@@ -117,6 +126,8 @@ module.exports = {
 
 
             if(result !== null && result.length > 0) {
+                const msg = await Message.findOne({conversationId: result[0]._id});
+                Helper.updateChatList(req, msg);
                 await Message.update({
                     conversationId: result[0]._id
                 }, {

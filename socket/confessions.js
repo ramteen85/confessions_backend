@@ -7,5 +7,9 @@ module.exports = (io) => {
         socket.on('addMessage', (data) => {
             io.emit('addMessage', {data});
         });
+
+        socket.on('refresh', () => {
+            io.emit('refresh', {});
+        });
     });
 }

@@ -5,11 +5,15 @@ const app = express();
 const bodyParser = require('body-parser');
 const mongoose = require('mongoose');
 const multer = require('multer');
+const cors = require('cors');
 
 // socket.io
 const server = require('http').createServer(app);
 const io = require('socket.io').listen(server);
+
+// sockets
 require('./socket/confessions')(io);
+require('./socket/private')(io);
 
 
 // import routes
@@ -29,12 +33,8 @@ app.use('/images', express.static(path.join(__dirname, 'images')));
 
 
 // CORS - multiple domains can be separated by commas
-app.use((req, res, next) => {
-    res.setHeader('Access-Control-Allow-Origin', '*');
-    res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, PATCH, DELETE');
-    res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
-    next();
-});
+app.use(cors());
+
 
 //route files
 // app.use('/feed', feedRoutes);
@@ -55,9 +55,7 @@ app.use((error, req, res, next) => {
 
 let endpoint = 'confessions';
 
-databaseUrl = 'mongodb+srv://ram:lMEFmOYQFS1kL5ou@chatmania-fowek.mongodb.net/' + endpoint + '?retryWrites=true&w=majority';
-
-mongoose.connect(databaseUrl, { useUnifiedTopology: true, useNewUrlParser: true, useCreateIndex: true })
+mongoose.connect(`mongodb+srv://${process.env.MONGO_USER}:${process.env.MONGO_PASSWORD}@${process.env.MONGO_ATLAS_SERVER}/${process.env.MONGO_DEFAULT_DATABASE}?retryWrites=true&w=majority`, { useUnifiedTopology: true, useNewUrlParser: true, useCreateIndex: true })
 .then(result => {
     server.listen(PORT, () => {
         console.log('Server started...');

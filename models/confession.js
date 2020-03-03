@@ -25,6 +25,10 @@ const confessionSchema = new Schema({
         type: Number,
         default: 0
     },
+    popScore: {
+        type: Number,
+        default: 0
+    },
     usersHearted: [{
         type: Schema.ObjectId,
         ref: 'user'
@@ -34,7 +38,7 @@ const confessionSchema = new Schema({
         ref: 'user'
     }],
     content: {
-        type: String,
+        type: String    ,
         required: true
     },
     imageUrl: {
