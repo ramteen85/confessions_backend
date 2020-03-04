@@ -6,7 +6,7 @@ const authController = require('../controllers/auth');
 
 const router = express.Router();
 
-router.put('/register', [
+router.post('/register', [
     body('result.email')
     .isEmail()
     .withMessage("Please enter a valid email...")
