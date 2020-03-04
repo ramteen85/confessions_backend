@@ -186,8 +186,8 @@ exports.saveRoughUserLoc = (req, res, next) => {
                 usr.countryCode = result.data.geoplugin_countryCode;
                 usr.state = result.data.geoplugin_regionName;
                 usr.suburb = result.data.geoplugin_city;
-                lng = result.data.geoplugin_longitude;
-                lat = result.data.geoplugin_latitude;
+                lng = +result.data.geoplugin_longitude;
+                lat = +result.data.geoplugin_latitude;
 
 
                 // geotagging
