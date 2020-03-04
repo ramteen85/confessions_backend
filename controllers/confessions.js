@@ -270,6 +270,8 @@ exports.getNearestConfessions = (req, res, next) => {
 
     user = User.findById(decodedToken.userId)
             .then(usr => {
+                console.log('reached user');
+                console.log(usr);
                 distance = usr.distance * 1000;
                 Confession.find(
                 {
