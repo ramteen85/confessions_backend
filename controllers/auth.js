@@ -209,6 +209,8 @@ exports.saveRoughUserLoc = (req, res, next) => {
                 trueLoc: usr.trueLoc,
             };
 
+            console.log('responding...');
+
             // respond with client info
             res.status(200).json({user: usrReturn});
         })
