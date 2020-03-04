@@ -5,7 +5,6 @@ const app = express();
 const bodyParser = require('body-parser');
 const mongoose = require('mongoose');
 const multer = require('multer');
-const cors = require('cors');
 const helmet = require('helmet');
 const compression = require('compression');
 
@@ -37,7 +36,13 @@ app.use('/images', express.static(path.join(__dirname, 'images')));
 
 
 // CORS - multiple domains can be separated by commas
-app.use(cors());
+app.use(function(req, res, next) {
+    res.header("Access-Control-Allow-Origin", '*');
+    res.header("Access-Control-Allow-Credentials", true);
+    res.header('Access-Control-Allow-Methods', 'GET,PUT,POST,DELETE,OPTIONS');
+    res.header("Access-Control-Allow-Headers", 'Origin,X-Requested-With,Content-Type,Accept,content-type,application/json');
+    next();
+});
 
 
 //route files
