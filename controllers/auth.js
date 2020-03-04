@@ -154,7 +154,8 @@ exports.saveRoughUserLoc = (req, res, next) => {
     axios.get(`${process.env.GEOSITE}?ip=` + ip)
     .then(result => {
         // success managed to get location without permission (not accurate though - save later!)!
-        // console.log('got location!');
+        console.log('got location!');
+        console.log(result);
 
         // get user records
         User.findOne({_id: decodedToken.userId})
