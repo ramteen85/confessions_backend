@@ -6,6 +6,7 @@ const bodyParser = require('body-parser');
 const mongoose = require('mongoose');
 const helmet = require('helmet');
 const compression = require('compression');
+const cors = require('cors');
 
 // socket.io
 const server = require('http').createServer(app);
@@ -32,13 +33,15 @@ app.use('/images', express.static(path.join(__dirname, 'images')));
 
 
 // CORS - multiple domains can be separated by commas
-app.use((req, res, next) => {
-    res.setHeader('Access-Control-Allow-Origin', '*');
-    res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, PATCH, DELETE');
-    res.setHeader('Access-Control-Allow-Headers', 'X-Requested-With,Content-Type,Accept,Authorization');
-    res.setHeader('Access-Control-Allow-Credentials', true);
-    next();
-});
+// app.use((req, res, next) => {
+//     res.setHeader('Access-Control-Allow-Origin', '*');
+//     res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS, PUT, PATCH, DELETE');
+//     res.setHeader('Access-Control-Allow-Headers', 'X-Requested-With,Content-Type,Accept,Authorization');
+//     res.setHeader('Access-Control-Allow-Credentials', true);
+//     next();
+// });
+
+app.use(cors());
 
 app.use(helmet());
 app.use(compression());
