@@ -10,16 +10,8 @@ exports.register = (req, res, next) => {
 
     // complete
 
-
-    const errors = validationResult(req);
-    if(!errors.isEmpty()) {
-        const error = new Error('Validation failed.');
-        error.statusCode = 422;
-        error.data = errors.array();
-        throw error;
-    }
     const email = req.body.result.email;
-    const nickname = req.body.result.nickname;
+    let nickname = req.body.result.nickname;
     if(nickname === '') {
         nickname = 'Anonymous';
     }
