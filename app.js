@@ -23,9 +23,6 @@ const authRoutes = require('./routes/auth');
 const confessionRoutes = require('./routes/confession');
 const messageRoutes = require('./routes/message');
 
-app.use(helmet());
-app.use(compression());
-
 const PORT = process.env.PORT || 8080;
 
 // app.use(bodyParser.urlencoded()); // x-www-form-urlencoded
@@ -44,6 +41,8 @@ app.use(function(req, res, next) {
     next();
 });
 
+app.use(helmet());
+app.use(compression());
 
 //route files
 // app.use('/feed', feedRoutes);
