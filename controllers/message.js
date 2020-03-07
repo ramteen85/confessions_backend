@@ -52,7 +52,7 @@ module.exports = {
                 });
             }
             if(data) {
-                let messages = Message.findOne({conversationId: data._id});
+                let messages = await Message.findOne({conversationId: data._id});
 
                 res.status(200).json({
                     message: 'Messages Returned!',
