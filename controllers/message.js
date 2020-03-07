@@ -73,6 +73,56 @@ module.exports = {
 
         console.log('conversation ?????');
     },
+    async markAllRead(req, res, next) {
+
+        // get token
+        token = req.body.data.token;
+
+        // verify token
+        let decodedToken;
+        try {
+            decodedToken = jwt.verify(token, process.env.SECRET_KEY)
+        } catch(err) {
+            err.statusCode = 500;
+            throw err;
+        }
+
+        const senderId = req.body.data.senderId;
+    
+        console.log(`Sender ID: ${senderId}`);
+
+        const msg = await Message.find({
+            $or: [
+                { receiver: senderId },
+                { sender: senderId }
+            ]
+        });
+
+        if(msg.length > 0) {
+            try {
+                msg.forEach(async value => {
+                    value.message.forEach(async body => {
+                        if(body.receiverId == senderId) {
+                            await Message.updateOne(
+                                {
+                                    'message._id': body._id
+                                },
+                                { $set: { 'message.$.isRead': true } }
+                            );
+                        }
+                    });
+                });
+                res.status(200).json({
+                    message: 'All Messages Marked as Read!'
+                });
+            }
+            catch(err) {
+                res.status(500).json({
+                    message: 'error occurred marking all messages'
+                });
+            }
+        }
+    },
     async markRead(req, res, next) {
 
         // get token
