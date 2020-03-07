@@ -341,16 +341,7 @@ exports.getConfession = async(req, res, next) => {
         usrlng = usr.location.coordinates[0];
 
         // get the confession
-        let confession = await Confession.findOne({_id: id}, function(err, conf){
-            if (err){
-                err.statusCode = 500;
-                throw err;
-            }else{
-                // found confession
-                confession = conf;
-                return confession;
-            }
-        })
+        let confession = await Confession.findOne({_id: id})
         .populate("creator", "nickname location _id");
 
         res.status(200).json({
