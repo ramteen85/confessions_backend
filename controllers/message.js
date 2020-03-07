@@ -73,6 +73,77 @@ module.exports = {
 
         console.log('conversation ?????');
     },
+    async markRead(req, res, next) {
+
+        // get token
+        token = req.body.data.token;
+
+        // verify token
+        let decodedToken;
+        try {
+            decodedToken = jwt.verify(token, process.env.SECRET_KEY)
+        } catch(err) {
+            err.statusCode = 500;
+            throw err;
+        }
+    
+        const senderId = req.body.data.senderId;
+        const receiverId = req.body.data.receiverId;
+    
+        console.log(`Sender ID: ${senderId}`);
+        console.log(`Receiver ID: ${receiverId}`);
+
+        conversation = await Conversation.findOne({
+            $or: [
+                {
+                    $and: [
+                        {'participants.senderId': senderId},
+                        {'participants.receiverId': receiverId}
+                    ]
+                },
+                {
+                    $and: [
+                        {'participants.senderId': receiverId},
+                        {'participants.receiverId': senderId}
+                    ]
+                }
+            ]
+        })
+        .select('_id');
+
+        if(conversation === null)
+        {
+            res.status(500).json({
+                error: "Couldn't find conversation to mark..."
+            });
+        }
+
+        messages = await Message.findOne({conversationId: conversation._id});
+
+        if(messages.message.length > 0) {
+            try {
+                messages.message.forEach( async (message) => {
+                        await Message.updateOne({
+                            'message._id': message._id
+                        },
+                        {
+                            $set: { 'message.$.isRead': true }
+                        });
+                });
+                console.log('Messages Read!');
+                res.status(200).json({
+                    message: 'Messages marked as read!'
+                });
+            }
+            catch(err) {
+                console.log('couldn mark as read');
+                res.status(500).json({
+                    message: 'Error Occurred...',
+                    data: err
+                });
+            }
+        }
+    },
     sendMessage(req, res, next) {
 
         // get tokens
