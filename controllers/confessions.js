@@ -23,9 +23,9 @@ function distance(lat1, lon1, lat2, lon2, unit) {
 		if (unit=="N") { dist = dist * 0.8684 }
 		return dist;
 	}
-}
+};
 
-exports.createConfession = (req, res, next) => {
+exports.createConfession = async(req, res, next) => {
 
     // get token
     token = req.body.confData.token;
@@ -39,28 +39,27 @@ exports.createConfession = (req, res, next) => {
         throw err;
     }
 
-    // form validation
-    const errors = validationResult(req);
-    if(!errors.isEmpty()) {
-        const error = new Error('Validation failed.');
-        error.statusCode = 422;
-        error.data = errors.array();
-        throw error;
-    }
+    try {
 
-    //get image
-    imageUrl = req.body.confData.imageUrl;
+        // form validation
+        const errors = validationResult(req);
+        if(!errors.isEmpty()) {
+            const error = new Error('Validation failed.');
+            error.statusCode = 422;
+            error.data = errors.array();
+            throw error;
+        }
 
-    // if imageUrl is blank, give it a default value
-    if(imageUrl === '' || !imageUrl) {
-        imageUrl = '@/img/66006-bigstock-confession-concept-42406879.jpg';
-    }
+        //get image
+        imageUrl = req.body.confData.imageUrl;
 
-    // get user
-    User.findById(decodedToken.userId )
-    .then(usr => {
+        // if imageUrl is blank, give it a default value
+        if(imageUrl === '' || !imageUrl) {
+            imageUrl = '@/img/66006-bigstock-confession-concept-42406879.jpg';
+        }
 
-        console.log(usr);
+        // get user
+        let usr = await User.findById(decodedToken.userId );
 
         // get the other variables
         confData = {
@@ -86,7 +85,7 @@ exports.createConfession = (req, res, next) => {
             // createdAt: moment.tz(Date.now(), "Australia/Sydney")
         });
 
-        confession.save();
+        await confession.save();
 
         // add confession to confessions list
         usr.confessionList.push({
@@ -95,7 +94,7 @@ exports.createConfession = (req, res, next) => {
 
         // save user
 
-        usr.save();
+        await usr.save();
 
         // send signal back (will have to restrict data later)
 
@@ -103,14 +102,16 @@ exports.createConfession = (req, res, next) => {
             message: 'Confession created!',
             confession: confession
         });
-    })
-    .catch(err => {
+
+    }
+    catch(err) {
         console.log(err);
-    });
+        next(err);
+    };
 
 };
 
-exports.getLatestConfessions = (req, res, next) => {
+exports.getLatestConfessions = async(req, res, next) => {
     // get token
     token = req.body.confData.token;
 
@@ -123,29 +124,33 @@ exports.getLatestConfessions = (req, res, next) => {
         throw err;
     }
 
-    //variables
-    const currentPage = req.body.confData.page || 1;
-    const perPage = 8;
+    try {
 
-    Confession.find()
-    .sort({createdAt: 'desc'})
-    .select("totalHearts totalHates subject content imageUrl _id createdAt")
-    .populate("creator", 'nickname location')
-    .skip((currentPage - 1) * perPage)
-    .limit(perPage)
-    .then(confessions => {
+        //variables
+        const currentPage = req.body.confData.page || 1;
+        const perPage = 8;
+
+        let confessions = await Confession.find()
+        .sort({createdAt: 'desc'})
+        .select("totalHearts totalHates subject content imageUrl _id createdAt")
+        .populate("creator", 'nickname location')
+        .skip((currentPage - 1) * perPage)
+        .limit(perPage);
+
         // return response
         res.status(200).json({
             message: 'Confessions fetched!',
             confessions: confessions
         });
-    })
-    .catch(err => {
-        console.log(err);
-    });
-}
 
-exports.getPopularConfessions = (req, res, next) => {
+    }
+    catch(err) {
+        console.log(err);
+        next(err);
+    };
+};
+
+exports.getPopularConfessions = async(req, res, next) => {
     // get token
     token = req.body.confData.token;
 
@@ -158,64 +163,69 @@ exports.getPopularConfessions = (req, res, next) => {
         throw err;
     }
 
-    //variables
-    const currentPage = req.body.confData.page || 1;
-    const perPage = 8;
+    try {
 
-    Confession.find()
-    .sort({popScore: 'desc'})
-    .select("totalHearts totalHates subject content imageUrl _id createdAt")
-    .populate("creator", 'nickname location')
-    .skip((currentPage - 1) * perPage)
-    .limit(perPage)
-    .then(confessions => {
+        //variables
+        const currentPage = req.body.confData.page || 1;
+        const perPage = 8;
+
+        let confessions = await Confession.find()
+        .sort({popScore: 'desc'})
+        .select("totalHearts totalHates subject content imageUrl _id createdAt")
+        .populate("creator", 'nickname location')
+        .skip((currentPage - 1) * perPage)
+        .limit(perPage);
+
         // return response
         res.status(200).json({
             message: 'Confessions fetched!',
             confessions: confessions
         });
-    })
-    .catch(err => {
+    }
+    catch(err) {
         console.log(err);
-    });
-}
+    };
+};
 
-exports.getHatedConfessions = (req, res, next) => {
+exports.getHatedConfessions = async(req, res, next) => {
     // get token
     token = req.body.confData.token;
 
     // verify token
     let decodedToken;
     try {
-        decodedToken = jwt.verify(token, process.env.SECRET_KEY)
+        decodedToken = jwt.verify(token, process.env.SECRET_KEY);
     } catch(err) {
         err.statusCode = 500;
         throw err;
     }
 
-    //variables
-    const currentPage = req.body.confData.page || 1;
-    const perPage = 8;
 
-    Confession.find()
-    .sort({popScore: 'asc'})
-    .select("totalHearts totalHates subject content imageUrl _id createdAt")
-    .populate("creator", 'nickname location')
-    .skip((currentPage - 1) * perPage)
-    .limit(perPage)
-    .then(confessions => {
+    try {
+    //variables
+        const currentPage = req.body.confData.page || 1;
+        const perPage = 8;
+
+        let confessons = await Confession.find()
+        .sort({popScore: 'asc'})
+        .select("totalHearts totalHates subject content imageUrl _id createdAt")
+        .populate("creator", 'nickname location')
+        .skip((currentPage - 1) * perPage)
+        .limit(perPage);
+
         // return response
         res.status(200).json({
             message: 'Confessions fetched!',
             confessions: confessions
         });
-    })
-    .catch(err => {
+    }
+    catch(err) {
         console.log(err);
-    });
+        next(err);
+    };
 }
 
-exports.saveDistance = (req, res, next) => {
+exports.saveDistance = async(req, res, next) => {
     // get token
     token = req.body.token;
 
@@ -228,29 +238,27 @@ exports.saveDistance = (req, res, next) => {
         throw err;
     }
 
-    // get distance
-    let distance = req.body.distance;
 
-    user = User.findById(decodedToken.userId)
-    .then(usr => {
+    try{
+        // get distance
+        let distance = req.body.distance;
+        let usr = await User.findById(decodedToken.userId);
+
         usr.distance = distance;
-        usr.save()
-        .then(() => {
-            res.status(200).json({
-                message: "ok"
-            });
-        })
-        .catch(err => {
-            next(err);
+        await usr.save();
+
+        res.status(200).json({
+            message: "ok"
         });
-    })
-    .catch(err => {
+    }
+    catch(err) {
         console.log(err);
-    })
+        next(err);
+    }
 }
 
 
-exports.getNearestConfessions = (req, res, next) => {
+exports.getNearestConfessions = async (req, res, next) => {
     // get token
     token = req.body.confData.token;
 
@@ -263,57 +271,52 @@ exports.getNearestConfessions = (req, res, next) => {
         throw err;
     }
 
-    //variables
-    const currentPage = req.body.confData.page || 1;
-    const perPage = 8;
-    let distance;
+    try {
 
-    user = User.findById(decodedToken.userId)
-            .then(usr => {
-                console.log('reached user');
-                console.log(usr);
-                distance = usr.distance * 1000;
-                Confession.find(
-                {
-                    location: {
-                        $near: {
-                            $maxDistance: distance,
-                            $geometry: {
-                                type: "Point",
-                                coordinates: [usr.location.coordinates[0], usr.location.coordinates[1]]
-                            }
+        //variables
+        const currentPage = req.body.confData.page || 1;
+        const perPage = 8;
+        let distance;
+
+        let usr = await User.findById(decodedToken.userId);
+        console.log('reached user');
+        console.log(usr);
+        distance = usr.distance * 1000;
+        let confessions = await Confession.find(
+            {
+                location: {
+                    $near: {
+                        $maxDistance: distance,
+                        $geometry: {
+                            type: "Point",
+                            coordinates: [usr.location.coordinates[0], usr.location.coordinates[1]]
                         }
                     }
                 }
-                )
-                .select("totalHearts totalHates subject content imageUrl _id createdAt")
-                .populate("creator", 'nickname location')
-                .skip((currentPage - 1) * perPage)
-                .limit(perPage)
-                .then(confessions => {
-                    // return response
-                    res.status(200).json({
-                        message: 'Confessions fetched!',
-                        confessions: confessions,
-                        distance: distance / 1000
-                    });
-                })
-                .catch(err => {
-                    console.log(err);
-                });
-            })
-            .catch(err => {
-                err.statusCode = 500;
-                err.message = "could not get geotag from user for query...";
-                throw err;
-            });
+            }
+        )
+        .select("totalHearts totalHates subject content imageUrl _id createdAt")
+        .populate("creator", 'nickname location')
+        .skip((currentPage - 1) * perPage)
+        .limit(perPage);
+
+        // return response
+        res.status(200).json({
+            message: 'Confessions fetched!',
+            confessions: confessions,
+            distance: distance / 1000
+        });
+    }
+    catch(err) {
+        err.statusCode = 500;
+        err.message = "could not get geotag from user for query...";
+        next(err);
+    };
 
     // res.status(200).json({ results: distance(150.895533, 34.414467699999996, 150.844376, 34.673820, "K") });
-
-    // get all confessions within a certain distance
 };
 
-exports.getConfession = (req, res, next) => {
+exports.getConfession = async(req, res, next) => {
     // get token
     token = req.body.confData.token;
     id = req.body.confData.id;
@@ -327,15 +330,18 @@ exports.getConfession = (req, res, next) => {
         throw err;
     }
 
-    let usrlat = 0;
-    let usrlng = 0;
+    try {
 
-    user = User.findById(decodedToken.userId)
-    .then(usr => {
+        let usrlat = 0;
+        let usrlng = 0;
+
+        user = await User.findById(decodedToken.userId);
+
         usrlat = usr.location.coordinates[1];
         usrlng = usr.location.coordinates[0];
+
         // get the confession
-        Confession.findOne({_id: id}, function(err, conf){
+        let confession = await Confession.findOne({_id: id}, function(err, conf){
             if (err){
                 err.statusCode = 500;
                 throw err;
@@ -345,25 +351,20 @@ exports.getConfession = (req, res, next) => {
                 return confession;
             }
         })
-        .populate("creator", "nickname location _id")
-        .then(confession => {
+        .populate("creator", "nickname location _id");
 
-            res.status(200).json({
-                confession: confession,
-                distance: distance(usrlng, usrlat, confession.location.coordinates[0], confession.location.coordinates[1], "K")
-            });
-        })
-        .catch(err => {
-            err.statusCode = 500;
-            throw err;
+        res.status(200).json({
+            confession: confession,
+            distance: distance(usrlng, usrlat, confession.location.coordinates[0], confession.location.coordinates[1], "K")
         });
-    })
-    .catch(err => {
+    }
+    catch(err) {
+        err.statusCode = 500;
         next(err);
-    })
+    }
 };
 
-exports.heartPost = (req, res, next) => {
+exports.heartPost = async(req, res, next) => {
     token = req.body.confData.token;
 
     // get token
@@ -378,23 +379,12 @@ exports.heartPost = (req, res, next) => {
         throw err;
     }
 
+    try {
 
-    confession_id = req.body.confData.id;
+        confession_id = req.body.confData.id;
+        let totalHearts;
+        let confession = await Confession.findOne({_id: confession_id});
 
-    let confession;
-    let totalHearts;
-
-    Confession.findOne({_id: confession_id}, function(err, conf){
-        if (err){
-            err.statusCode = 500;
-            throw err;
-        }else{
-            // found confession
-            confession = conf;
-            return confession;
-        }
-    })
-    .then(confession => {
         if(confession.usersHearted.includes(decodedToken.userId) === false) {
             if(confession.usersHated.includes(decodedToken.userId) === true) {
                 tempIndex = confession.usersHated.indexOf(decodedToken.userId);
@@ -412,24 +402,22 @@ exports.heartPost = (req, res, next) => {
         confession.popScore = confession.totalHearts - confession.totalHates;
 
 
-        confession.save();
+        await confession.save();
 
-        return confession;
-    })
-    .then(confession => {
         res.status(200)
-           .json({
-               confession: confession,
-               hearts: confession.totalHearts,
-               hates: confession.totalHates
-           });
-    })
-    .catch(err => {
+        .json({
+            confession: confession,
+            hearts: confession.totalHearts,
+            hates: confession.totalHates
+        });
+    }
+    catch(err) {
+        err.statusCode = 500;
         next(err);
-    });
+    };
 }
 
-exports.hatePost = (req, res, next) => {
+exports.hatePost = async(req, res, next) => {
     token = req.body.confData.token;
 
     // get token
@@ -441,25 +429,14 @@ exports.hatePost = (req, res, next) => {
         decodedToken = jwt.verify(token, process.env.SECRET_KEY)
     } catch(err) {
         err.statusCode = 500;
-        throw err;
+        next(err);
     }
 
+    try {
 
-    confession_id = req.body.confData.id;
+        confession_id = req.body.confData.id;
+        let confession = await Confession.findOne({_id: confession_id});
 
-    let confession;
-
-    Confession.findOne({_id: confession_id}, function(err, conf){
-        if (err){
-            err.statusCode = 500;
-            throw err;
-        }else{
-            // found confession
-            confession = conf;
-            return confession;
-        }
-    })
-    .then(confession => {
         if(confession.usersHated.includes(decodedToken.userId) === false) {
             if(confession.usersHearted.includes(decodedToken.userId) === true) {
                 tempIndex = confession.usersHearted.indexOf(decodedToken.userId);
@@ -476,21 +453,21 @@ exports.hatePost = (req, res, next) => {
 
         confession.popScore = confession.totalHearts - confession.totalHates;
 
-        confession.save();
-
-        return confession;
-    })
-    .then(confession => {
+        await confession.save();
         res.status(200)
-           .json({
-               confession: confession,
-               hearts: confession.totalHearts,
-               hates: confession.totalHates
-           });
-    });
+        .json({
+            confession: confession,
+            hearts: confession.totalHearts,
+            hates: confession.totalHates
+        });
+    }
+    catch(err) {
+        err.statusCode = 500;
+        next(err);
+    }
 }
 
-exports.deleteConfession = (req, res, next) => {
+exports.deleteConfession = async(req, res, next) => {
     token = req.body.confData.token;
 
     // get token
@@ -505,22 +482,22 @@ exports.deleteConfession = (req, res, next) => {
         throw err;
     }
 
-    //get confession id
-    confessionId = req.body.confData.id;
+    try {
 
-    //get actual confession
-    Confession.deleteOne({"_id": confessionId})
-    .then(data => {
+        //get confession id
+        confessionId = req.body.confData.id;
 
-        User.findById(decodedToken._id)
-        .then(user => {
-            console.log(user);
-            res.status(200).json({
-                data: data
-            });
-        })
-        .catch(err => {
-            console.log(err);
+        //get actual confession
+        let data = await Confession.deleteOne({"_id": confessionId});
+        let user = await User.findById(decodedToken._id);
+
+        console.log(user);
+        res.status(200).json({
+            data: data
         });
-    });
+    }
+    catch(err) {
+        err.statusCode = 500;
+        next(err);
+    }
 }
