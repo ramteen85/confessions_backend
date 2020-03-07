@@ -300,7 +300,7 @@ exports.getChatList = async(req, res, next) => {
     try {
         decodedToken = jwt.verify(token, process.env.SECRET_KEY)
     } catch(err) {
-        res.status(200).json({
+        res.status(500).json({
             message: "An error occurred"
         });
     }
@@ -309,6 +309,12 @@ exports.getChatList = async(req, res, next) => {
         console.log(decodedToken.userId);
 
         let userId = decodedToken.userId;
+        if(!userId) {
+            let err = new Error();
+            err.statusCode = 500;
+            err.message = "Invalid Token..";
+            throw err;
+        }
 
         let data = Message.find({
             $or: [
@@ -343,6 +349,7 @@ exports.getChatList = async(req, res, next) => {
     }
     catch(err) {
         console.log(err);
+        next(err);
     };
 
 }
@@ -356,7 +363,7 @@ exports.login = async(req, res, next) => {
     let loadedUser;
 
     try {
-        let user = User.findOne({email: email});
+        let user = await User.findOne({email: email});
 
         if(!user) {
             const error = new Error('Invalid Username/Password');
