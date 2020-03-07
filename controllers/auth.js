@@ -317,7 +317,7 @@ exports.getChatList = async(req, res, next) => {
             throw err;
         }
 
-        let data = Message.find({
+        let data = await Message.find({
             $or: [
                 {receiver: userId},
                 {sender: userId}
