@@ -305,25 +305,26 @@ exports.getChatList = async(req, res, next) => {
         });
     }
 
-    console.log(decodedToken.userId);
+    try {
+        console.log(decodedToken.userId);
 
-    userId = decodedToken.userId;
+        let userId = decodedToken.userId;
 
-    Message.find({
-        $or: [
-            {receiver: userId},
-            {sender: userId}
-        ]
-    })
-    .select('message conversationId sender receiver')
-    .then( data => {
+        let data = Message.find({
+            $or: [
+                {receiver: userId},
+                {sender: userId}
+            ]
+        })
+        .select('message conversationId sender receiver');
+
         if(data === null)
         {
             res.status(200).json({
-              error: "No Conversation Exists",
-              messages: {
+                error: "No Conversation Exists",
+                messages: {
                 message: []
-              }
+                }
 
             });
         }
@@ -339,11 +340,10 @@ exports.getChatList = async(req, res, next) => {
                 conversations: finaldata
             });
         }
-
-    })
-    .catch(err => {
+    }
+    catch(err) {
         console.log(err);
-    });
+    };
 
 }
 
