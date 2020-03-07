@@ -206,7 +206,7 @@ exports.getHatedConfessions = async(req, res, next) => {
         const currentPage = req.body.confData.page || 1;
         const perPage = 8;
 
-        let confessons = await Confession.find()
+        let confessions = await Confession.find()
         .sort({popScore: 'asc'})
         .select("totalHearts totalHates subject content imageUrl _id createdAt")
         .populate("creator", 'nickname location')
