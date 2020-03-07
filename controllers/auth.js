@@ -306,6 +306,7 @@ exports.getChatList = async(req, res, next) => {
     }
 
     try {
+        console.log('getchatlist');
         console.log(decodedToken.userId);
 
         let userId = decodedToken.userId;
@@ -326,7 +327,7 @@ exports.getChatList = async(req, res, next) => {
 
         if(data === null)
         {
-            res.status(200).json({
+            res.status(500).json({
                 error: "No Conversation Exists",
                 messages: {
                 message: []
