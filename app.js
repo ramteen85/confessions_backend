@@ -7,14 +7,19 @@ const mongoose = require('mongoose');
 const helmet = require('helmet');
 const compression = require('compression');
 const cors = require('cors');
+const _ = require('lodash');
 
 // socket.io
 const server = require('http').createServer(app);
 const io = require('socket.io').listen(server);
 
+// online checker helper
+const User = require('./helpers/userClass').User;
+
 // sockets
-require('./socket/confessions')(io);
+require('./socket/confessions')(io, User, _);
 require('./socket/private')(io);
+
 
 
 // import routes
