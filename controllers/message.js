@@ -17,61 +17,56 @@ module.exports = {
             next(err)
         }
 
-        const {senderId, receiverId} = req.params;
+        try {
 
-        const sender = await User.findById(senderId);
-        const receiver = await User.findById(receiverId);
+            const {senderId, receiverId} = req.params;
 
-        Conversation.findOne({
-            $or: [
-                {
-                    $and: [
-                        {'participants.senderId': senderId},
-                        {'participants.receiverId': receiverId}
-                    ]
-                },
-                {
-                    $and: [
-                        {'participants.senderId': receiverId},
-                        {'participants.receiverId': senderId}
-                    ]
-                }
-            ]
-        })
-        .select('_id')
-        .then( data => {
+            const sender = await User.findById(senderId);
+            const receiver = await User.findById(receiverId);
+
+            let data = await Conversation.findOne({
+                $or: [
+                    {
+                        $and: [
+                            {'participants.senderId': senderId},
+                            {'participants.receiverId': receiverId}
+                        ]
+                    },
+                    {
+                        $and: [
+                            {'participants.senderId': receiverId},
+                            {'participants.receiverId': senderId}
+                        ]
+                    }
+                ]
+            })
+            .select('_id');
+
             if(data === null)
             {
                 res.status(200).json({
-                  error: "No Conversation Exists",
-                  messages: {
-                    message: []
-                  }
-
+                    error: "No Conversation Exists",
+                    messages: {
+                        message: []
+                    }
                 });
             }
-            console.log(data);
             if(data) {
-                Message.findOne({conversationId: data._id})
-                .then(messages => {
-                    res.status(200).json({
-                        message: 'Messages Returned!',
-                        messages: messages,
-                        senderName: sender.nickname,
-                        receiverName: receiver.nickname
-                    });
-                })
-                .catch(err => {
-                    console.log('Could not get messages', err);
+                let messages = Message.findOne({conversationId: data._id});
+
+                res.status(200).json({
+                    message: 'Messages Returned!',
+                    messages: messages,
+                    senderName: sender.nickname,
+                    receiverName: receiver.nickname
                 });
             }
-
-        })
-        .catch(err => {
-            console.log(err);
-        });
-
-        console.log('conversation ?????');
+        }
+        catch(err) {
+            err.message = "Could not get messages...";
+            err.statusCode = 500;
+            next(err);
+        };
     },
     async markAllRead(req, res, next) {
 
@@ -87,19 +82,20 @@ module.exports = {
             throw err;
         }
 
-        const senderId = req.body.data.senderId;
-    
-        console.log(`Sender ID: ${senderId}`);
+        try {
 
-        const msg = await Message.find({
-            $or: [
-                { receiver: senderId },
-                { sender: senderId }
-            ]
-        });
+            const senderId = req.body.data.senderId;
 
-        if(msg.length > 0) {
-            try {
+            console.log(`Sender ID: ${senderId}`);
+
+            const msg = await Message.find({
+                $or: [
+                    { receiver: senderId },
+                    { sender: senderId }
+                ]
+            });
+
+            if(msg.length > 0) {
                 msg.forEach(async value => {
                     value.message.forEach(async body => {
                         if(body.receiverId == senderId) {
@@ -116,11 +112,11 @@ module.exports = {
                     message: 'All Messages Marked as Read!'
                 });
             }
-            catch(err) {
-                res.status(500).json({
-                    message: 'error occurred marking all messages'
-                });
-            }
+        }
+        catch(err) {
+            err.statusCode = 500;
+            err.message = 'error occurred marking all messages';
+            next(err);
         }
     },
     async markRead(req, res, next) {
@@ -136,42 +132,43 @@ module.exports = {
             err.statusCode = 500;
             throw err;
         }
-    
-        const senderId = req.body.data.senderId;
-        const receiverId = req.body.data.receiverId;
-    
-        console.log(`Sender ID: ${senderId}`);
-        console.log(`Receiver ID: ${receiverId}`);
 
-        conversation = await Conversation.findOne({
-            $or: [
-                {
-                    $and: [
-                        {'participants.senderId': senderId},
-                        {'participants.receiverId': receiverId}
-                    ]
-                },
-                {
-                    $and: [
-                        {'participants.senderId': receiverId},
-                        {'participants.receiverId': senderId}
-                    ]
-                }
-            ]
-        })
-        .select('_id');
+        try {
 
-        if(conversation === null)
-        {
-            res.status(500).json({
-                error: "Couldn't find conversation to mark..."
-            });
-        }
+            const senderId = req.body.data.senderId;
+            const receiverId = req.body.data.receiverId;
 
-        messages = await Message.findOne({conversationId: conversation._id});
+            console.log(`Sender ID: ${senderId}`);
+            console.log(`Receiver ID: ${receiverId}`);
 
-        if(messages.message.length > 0) {
-            try {
+            let conversation = await Conversation.findOne({
+                $or: [
+                    {
+                        $and: [
+                            {'participants.senderId': senderId},
+                            {'participants.receiverId': receiverId}
+                        ]
+                    },
+                    {
+                        $and: [
+                            {'participants.senderId': receiverId},
+                            {'participants.receiverId': senderId}
+                        ]
+                    }
+                ]
+            })
+            .select('_id');
+
+            if(conversation === null)
+            {
+                error = new Error();
+                error.message = 'No Conversations found';
+                throw error;
+            }
+
+            let messages = await Message.findOne({conversationId: conversation._id});
+
+            if(messages.message.length > 0) {
                 messages.message.forEach( async (message) => {
                         await Message.updateOne({
                             'message._id': message._id
@@ -185,16 +182,15 @@ module.exports = {
                     message: 'Messages marked as read!'
                 });
             }
-            catch(err) {
-                console.log('couldn mark as read');
-                res.status(500).json({
-                    message: 'Error Occurred...',
-                    data: err
-                });
-            }
+        }
+        catch(err) {
+            err.statusCode = 500;
+            if(!err.message)
+                err.message = 'Error occurred marking selective messages...';
+            next(err);
         }
     },
-    sendMessage(req, res, next) {
+    async sendMessage(req, res, next) {
 
         // get tokens
         token = req.body.convData.token;
@@ -208,39 +204,39 @@ module.exports = {
             next(err)
         }
 
-        // get variables
-        senderId = req.body.convData.senderId;
-        receiverId = req.body.convData.receiverId;
-        message = req.body.convData.message;
+        try {
 
-        console.log('request body:', req.body);
-        
+            // get variables
+            senderId = req.body.convData.senderId;
+            receiverId = req.body.convData.receiverId;
+            message = req.body.convData.message;
+
+            console.log('request body:', req.body);
 
 
-        console.log('value', receiverId);
+            console.log('value', receiverId);
 
-        // check for previous conversations
-        Conversation.find({
-            $or: [
-                {
-                    participants: {
-                        $elemMatch: {
-                            senderId: senderId,
-                            receiverId: receiverId
+            // check for previous conversations
+            let result = await Conversation.find({
+                $or: [
+                    {
+                        participants: {
+                            $elemMatch: {
+                                senderId: senderId,
+                                receiverId: receiverId
+                            }
+                        }
+                    },
+                    {
+                        participants: {
+                            $elemMatch: {
+                                senderId: receiverId,
+                                receiverId: senderId
+                            }
                         }
                     }
-                },
-                {
-                    participants: {
-                        $elemMatch: {
-                            senderId: receiverId,
-                            receiverId: senderId
-                        }
-                    }
-                }
-            ]
-        },
-         async(err, result) => {
+                ]
+            });
 
             sender = await User.findById(senderId);
             receiver = await User.findById(receiverId);
@@ -261,23 +257,16 @@ module.exports = {
                             body: message
                         }
                     }
-                })
-                .then(() => {
-                    res.status(200).json({
-                        message: "message sent successfully",
-                        data: {
-                            senderId: senderId,
-                            receiverId: receiverId,
-                            senderName: sender.nickname,
-                            receiverName: receiver.nickname,
-                            body: message
-                        }
-                    });
-                })
-                .catch(err => {
-                    res.status(500).json({
-                        message: "Error occurred sending message!"
-                    });
+                });
+                res.status(200).json({
+                    message: "message sent successfully",
+                    data: {
+                        senderId: senderId,
+                        receiverId: receiverId,
+                        senderName: sender.nickname,
+                        receiverName: receiver.nickname,
+                        body: message
+                    }
                 });
             } else {
                 const newConversation = new Conversation();
@@ -334,20 +323,18 @@ module.exports = {
                 });
 
                 await newMessage
-                .save()
-                .then(() => {
-                    res.status(200).json({
-                        message: "message sent",
-                    });
-                })
-                .catch(err => {
-                    res.status(500).json({
-                        message: "Error occurred sending message!"
-                    });
+                .save();
+                res.status(200).json({
+                    message: "message sent",
                 });
-
             }
-        });
+        }
+        catch(err) {
+            err.statusCode = 500;
+            if(!err.message)
+                err.message = "error occurred sending message...";
+            next(err);
+        }
     }
 };
 
