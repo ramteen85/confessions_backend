@@ -335,7 +335,7 @@ exports.getConfession = async(req, res, next) => {
         let usrlat = 0;
         let usrlng = 0;
 
-        user = await User.findById(decodedToken.userId);
+        let usr = await User.findById(decodedToken.userId);
 
         usrlat = usr.location.coordinates[1];
         usrlng = usr.location.coordinates[0];
