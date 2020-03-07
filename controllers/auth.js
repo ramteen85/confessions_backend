@@ -6,19 +6,18 @@ const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const axios = require('axios');
 
-exports.register = (req, res, next) => {
+exports.register = async(req, res, next) => {
 
     // complete
+    try {
+        const email = req.body.result.email;
+        let nickname = req.body.result.nickname;
+        if(nickname === '') {
+            nickname = 'Anonymous';
+        }
+        const password = req.body.result.password;
 
-    const email = req.body.result.email;
-    let nickname = req.body.result.nickname;
-    if(nickname === '') {
-        nickname = 'Anonymous';
-    }
-    const password = req.body.result.password;
-
-    bcrypt.hash(password, 12)
-    .then(hashedPw => {
+        const hashedPw = await bcrypt.hash(password, 12);
         const user = new User({
             email: email,
             password: hashedPw,
@@ -28,26 +27,26 @@ exports.register = (req, res, next) => {
             lng: '',
             accessLevel: 0
         });
-        return user.save();
-    })
-    .then(result => {
+        await user.save();
+
         const token = jwt.sign({
-            email: result.email,
-            userId: result._id.toString()
+            email: user.email,
+            userId: user._id.toString()
         },
             `${process.env.SECRET_KEY}`,
             { expiresIn: '12h' }
         );
 
 
-        res.status(201).json({message: 'User created!', userId: result._id, token: token});
-    })
-    .catch(err => {
+        res.status(201).json({message: 'User created!', userId: user._id, token: token});
+    }
+    catch(err)
+    {
         if(!err.statusCode) {
             err.statusCode = 500;
         }
         next(err);
-    });
+    };
 };
 
 exports.saveTrueUserLoc = (req, res, next) => {
