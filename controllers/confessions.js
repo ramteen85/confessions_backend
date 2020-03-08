@@ -63,7 +63,7 @@ exports.createConfession = async(req, res, next) => {
 
         // if imageUrl is blank, give it a default value
         if(imageUrl === '' || !imageUrl) {
-            imageUrl = '@/img/66006-bigstock-confession-concept-42406879.jpg';
+            imageUrl = 'https://www.bigstockphoto.com/blog/wp-content/uploads/2014/01/66006-bigstock-confession-concept-42406879.jpg';
         }
 
         // get user
