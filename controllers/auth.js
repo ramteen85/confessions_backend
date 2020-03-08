@@ -72,7 +72,7 @@ exports.saveTrueUserLoc = async(req, res, next) => {
     try 
     {
         // get user records
-        let usr = await User.findOne({_id: decodedToken.userId})
+        let usr = await User.findOne({_id: decodedToken.userId});
         
         // got user records
         // console.log(user);
@@ -146,7 +146,7 @@ exports.saveRoughUserLoc = async(req, res, next) => {
 
     try {
         // now need to get geolocation from ip
-        let result = axios.get(`${process.env.GEOSITE}?ip=` + ip);
+        let result = await axios.get(`${process.env.GEOSITE}?ip=` + ip);
 
         // success managed to get location without permission (not accurate though - save later!)!
         console.log('got location!');
