@@ -391,7 +391,7 @@ exports.login = async(req, res, next) => {
             userId: loadedUser._id.toString()
         },
             process.env.SECRET_KEY,
-            { expiresIn: '1s' }
+            { expiresIn: '24h' }
         );
         res.status(200).json({ token: token, userId: loadedUser._id.toString() });
     }
