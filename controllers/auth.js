@@ -87,6 +87,7 @@ exports.saveTrueUserLoc = async(req, res, next) => {
             let result = await axios.get(`https://maps.googleapis.com/maps/api/geocode/json?latlng=${lat},${lng}&key=${api}`);
             
             // got location!
+            console.log(result);
 
             // save callback results
             usr.streetNumber = result.data.results[0].address_components[0].long_name;
