@@ -6,6 +6,14 @@ const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const axios = require('axios');
 
+verifyToken = (token, key) => {
+    try {
+        return jwt.verify(token, key);
+    } catch (e) {
+        return null;
+    }
+}
+
 exports.register = async(req, res, next) => {
 
     // complete
@@ -141,7 +149,7 @@ exports.saveRoughUserLoc = async(req, res, next) => {
         decodedToken = jwt.verify(token, process.env.SECRET_KEY)
     } catch(err) {
         err.statusCode = 500;
-        throw err;
+        next(err);
     }
 
     try {
@@ -266,14 +274,14 @@ exports.getUserById = async(req, res, next) => {
     id = req.body.data.id;
 
     // verify token
-    let decodedToken;
-    try {
-        decodedToken = jwt.verify(token, process.env.SECRET_KEY)
-    } catch(err) {
+    let decodedToken = verifyToken(token, process.env.SECRET_KEY);
+
+    if(!decodedToken) {
         res.status(200).json({
-            message: "An error occurred"
+            message: "invalid token"
         });
     }
+
     try {
         let result = await User.findById(id).populate('confessionsList').populate('chatList');
 
@@ -296,15 +304,14 @@ exports.getChatList = async(req, res, next) => {
 
     token = req.body.data.token;
 
-    // verify token
-    let decodedToken;
-    try {
-        decodedToken = jwt.verify(token, process.env.SECRET_KEY)
-    } catch(err) {
-        res.status(500).json({
-            message: "An error occurred"
-        });
-    }
+   // verify token
+   let decodedToken = verifyToken(token, process.env.SECRET_KEY);
+
+   if(!decodedToken) {
+       res.status(200).json({
+           message: "invalid token"
+       });
+   }
 
     try {
         console.log('getchatlist');
@@ -401,12 +408,12 @@ exports.getAllUsers = async(req, res, next) => {
     token = req.body.data.token;
 
     // verify token
-    let decodedToken;
-    try {
-        decodedToken = jwt.verify(token, process.env.SECRET_KEY)
-    } catch(err) {
-        err.statusCode = 500;
-        next(err)
+    let decodedToken = verifyToken(token, process.env.SECRET_KEY);
+
+    if(!decodedToken) {
+        res.status(200).json({
+            message: "invalid token"
+        });
     }
 
     try {
