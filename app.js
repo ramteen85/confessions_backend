@@ -4,7 +4,7 @@ const express = require('express');
 const app = express();
 const bodyParser = require('body-parser');
 const mongoose = require('mongoose');
-const helmet = require('helmet');
+// const helmet = require('helmet');
 const compression = require('compression');
 const cors = require('cors');
 const _ = require('lodash');
@@ -48,7 +48,7 @@ app.use('/images', express.static(path.join(__dirname, 'images')));
 
 app.use(cors());
 
-app.use(helmet());
+// app.use(helmet());
 app.use(compression());
 
 //route files
