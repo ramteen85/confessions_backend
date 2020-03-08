@@ -3,6 +3,14 @@ const Confession = require('../models/confession');
 const { validationResult } = require('express-validator');
 const jwt = require('jsonwebtoken');
 
+verifyToken = (token, key) => {
+    try {
+        return jwt.verify(token, key);
+    } catch (e) {
+        return null;
+    }
+}
+
 function distance(lat1, lon1, lat2, lon2, unit) {
 	if ((lat1 == lat2) && (lon1 == lon2)) {
 		return 0;
@@ -31,12 +39,12 @@ exports.createConfession = async(req, res, next) => {
     token = req.body.confData.token;
 
     // verify token
-    let decodedToken;
-    try {
-        decodedToken = jwt.verify(token, `${process.env.SECRET_KEY}`)
-    } catch(err) {
-        err.statusCode = 500;
-        throw err;
+    let decodedToken = verifyToken(token, process.env.SECRET_KEY);
+
+    if(!decodedToken) {
+        res.status(200).json({
+            message: 'invalid token'
+        });
     }
 
     try {
@@ -116,12 +124,12 @@ exports.getLatestConfessions = async(req, res, next) => {
     token = req.body.confData.token;
 
     // verify token
-    let decodedToken;
-    try {
-        decodedToken = jwt.verify(token, `${process.env.SECRET_KEY}`)
-    } catch(err) {
-        err.statusCode = 500;
-        throw err;
+    let decodedToken = verifyToken(token, process.env.SECRET_KEY);
+
+    if(!decodedToken) {
+        res.status(200).json({
+            message: 'invalid token'
+        });
     }
 
     try {
@@ -155,12 +163,12 @@ exports.getPopularConfessions = async(req, res, next) => {
     token = req.body.confData.token;
 
     // verify token
-    let decodedToken;
-    try {
-        decodedToken = jwt.verify(token, process.env.SECRET_KEY)
-    } catch(err) {
-        err.statusCode = 500;
-        throw err;
+    let decodedToken = verifyToken(token, process.env.SECRET_KEY);
+
+    if(!decodedToken) {
+        res.status(200).json({
+            message: 'invalid token'
+        });
     }
 
     try {
@@ -192,12 +200,12 @@ exports.getHatedConfessions = async(req, res, next) => {
     token = req.body.confData.token;
 
     // verify token
-    let decodedToken;
-    try {
-        decodedToken = jwt.verify(token, process.env.SECRET_KEY);
-    } catch(err) {
-        err.statusCode = 500;
-        throw err;
+    let decodedToken = verifyToken(token, process.env.SECRET_KEY);
+
+    if(!decodedToken) {
+        res.status(200).json({
+            message: 'invalid token'
+        });
     }
 
 
@@ -230,12 +238,12 @@ exports.saveDistance = async(req, res, next) => {
     token = req.body.token;
 
     // verify token
-    let decodedToken;
-    try {
-        decodedToken = jwt.verify(token, process.env.SECRET_KEY)
-    } catch(err) {
-        err.statusCode = 500;
-        throw err;
+    let decodedToken = verifyToken(token, process.env.SECRET_KEY);
+
+    if(!decodedToken) {
+        res.status(200).json({
+            message: 'invalid token'
+        });
     }
 
 
@@ -263,12 +271,12 @@ exports.getNearestConfessions = async (req, res, next) => {
     token = req.body.confData.token;
 
     // verify token
-    let decodedToken;
-    try {
-        decodedToken = jwt.verify(token, process.env.SECRET_KEY)
-    } catch(err) {
-        err.statusCode = 500;
-        throw err;
+    let decodedToken = verifyToken(token, process.env.SECRET_KEY);
+
+    if(!decodedToken) {
+        res.status(200).json({
+            message: 'invalid token'
+        });
     }
 
     try {
@@ -322,12 +330,12 @@ exports.getConfession = async(req, res, next) => {
     id = req.body.confData.id;
 
     // verify token
-    let decodedToken;
-    try {
-        decodedToken = jwt.verify(token, process.env.SECRET_KEY)
-    } catch(err) {
-        err.statusCode = 500;
-        throw err;
+    let decodedToken = verifyToken(token, process.env.SECRET_KEY);
+
+    if(!decodedToken) {
+        res.status(200).json({
+            message: 'invalid token'
+        });
     }
 
     try {
@@ -362,12 +370,12 @@ exports.heartPost = async(req, res, next) => {
     token = req.body.confData.token;
 
     // verify token
-    let decodedToken;
-    try {
-        decodedToken = jwt.verify(token, process.env.SECRET_KEY)
-    } catch(err) {
-        err.statusCode = 500;
-        throw err;
+    let decodedToken = verifyToken(token, process.env.SECRET_KEY);
+
+    if(!decodedToken) {
+        res.status(200).json({
+            message: 'invalid token'
+        });
     }
 
     try {
@@ -415,12 +423,12 @@ exports.hatePost = async(req, res, next) => {
     token = req.body.confData.token;
 
     // verify token
-    let decodedToken;
-    try {
-        decodedToken = jwt.verify(token, process.env.SECRET_KEY)
-    } catch(err) {
-        err.statusCode = 500;
-        next(err);
+    let decodedToken = verifyToken(token, process.env.SECRET_KEY);
+
+    if(!decodedToken) {
+        res.status(200).json({
+            message: 'invalid token'
+        });
     }
 
     try {
@@ -465,12 +473,12 @@ exports.deleteConfession = async(req, res, next) => {
     token = req.body.confData.token;
 
     // verify token
-    let decodedToken;
-    try {
-        decodedToken = jwt.verify(token, process.env.SECRET_KEY)
-    } catch(err) {
-        err.statusCode = 500;
-        throw err;
+    let decodedToken = verifyToken(token, process.env.SECRET_KEY);
+
+    if(!decodedToken) {
+        res.status(200).json({
+            message: 'invalid token'
+        });
     }
 
     try {
@@ -478,9 +486,25 @@ exports.deleteConfession = async(req, res, next) => {
         //get confession id
         confessionId = req.body.confData.id;
 
+        let user = await User.findById(decodedToken._id);
+
+        //get user confessionList
+        let confessionList = user.confessionList;
+        let index = confessionList.findIndex(conf => conf.confessionId === confessionId);
+
+        if(index === -1) {
+            res.status(200).json({
+                message: 'This user cannot delete this confession...'
+            });
+        }
+        else {
+            confessionList = confessionList.splice(index, 1);
+            user.confessionList = confessionList;
+            await user.save();
+        }
+
         //get actual confession
         let data = await Confession.deleteOne({"_id": confessionId});
-        let user = await User.findById(decodedToken._id);
 
         console.log(user);
         res.status(200).json({
