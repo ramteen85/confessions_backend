@@ -124,7 +124,7 @@ exports.createConfession = async(req, res, next) => {
             const uploader = async(path) => await uploads(path, 'confessions');
 
             // image exists - handle image upload here
-            result = await uploader(req.files[0].path;
+            result = await uploader(req.files[0].path);
 
             console.log('result');
             console.log(result);
