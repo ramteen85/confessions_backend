@@ -109,24 +109,22 @@ exports.createConfession = async(req, res, next) => {
         let result;
 
         // if imageUrl is blank, give it a default value
-        if(req.file === undefined) {
+        if(req.files[0] === undefined) {
             // image does not exist. set default image URL
             imageUrl = 'https://www.bigstockphoto.com/blog/wp-content/uploads/2014/01/66006-bigstock-confession-concept-42406879.jpg';
             result = {
                 id: '',
                 version: ''
             };
-            console.log(req);
         }else {
-            console.log(req.file);
             // get string encoding of file
-            const fileString = base64_encode(req.file.path);
+            const fileString = base64_encode(req.files[0].path);
 
             // initialise uploader
             const uploader = async(path) => await uploads(path, 'confessions');
 
             // image exists - handle image upload here
-            result = await uploader(req.file.path);
+            result = await uploader(fileString);
 
             console.log('result');
             console.log(result);
