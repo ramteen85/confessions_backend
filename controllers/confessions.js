@@ -127,6 +127,9 @@ exports.createConfession = async(req, res, next) => {
             // image exists - handle image upload here
             result = await uploader(req.file.path);
 
+            console.log('result');
+            console.log(result);
+
             // delete file
             fs.unlinkSync(req.file.path);
 
