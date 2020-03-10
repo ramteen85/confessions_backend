@@ -130,7 +130,7 @@ exports.createConfession = async(req, res, next) => {
             console.log(result);
 
             // delete file
-            fs.unlinkSync(req.file.path);
+            fs.unlinkSync(fileString);
 
             // save cloudinary image url
             imageUrl = result.url;
