@@ -40,7 +40,7 @@ const PORT = process.env.PORT || 8080;
 
 const fileStorage = multer.diskStorage({
     destination: (req, file, cb) => {
-        cb(null, path.join(__dirname, 'images'));
+        cb(null, path.resolve(__dirname, 'build'));
     },
     filename: (req, file, cb) => {
         // fs.readdir( 'images', function(error, files) {  
@@ -75,8 +75,8 @@ app.use(upload.any());
 app.use(bodyParser.urlencoded({extended: true, limit: '50mb'})); // x-www-form-urlencoded
 app.use(bodyParser.json({limit: '50mb'})); // application/json
 // to use the /images folder in the frond end
-// app.use(express.static(path.resolve(__dirname, 'build')));
-app.use('/images', express.static(path.join(__dirname, 'images')));
+app.use(express.static(path.resolve(__dirname, 'build')));
+// app.use('/images', express.static(path.join(__dirname, 'images')));
 
 
 
