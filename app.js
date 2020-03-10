@@ -14,6 +14,12 @@ const fs = require('fs');
 //file uploads
 const multer = require('multer');
 
+try {
+    fs.mkdirSync(path.join(__dirname, '/images/'))
+  } catch (err) {
+    if (err.code !== 'EEXIST') throw err
+  }
+
 
 // socket.io
 const server = require('http').createServer(app);
