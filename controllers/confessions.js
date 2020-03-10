@@ -116,7 +116,7 @@ exports.createConfession = async(req, res, next) => {
                 id: '',
                 version: ''
             };
-            console.log('undefined??');
+            console.log(req);
         }else {
             console.log(req.file);
             // get string encoding of file
