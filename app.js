@@ -43,7 +43,7 @@ const fileStorage = multer.diskStorage({
         cb(null, path.resolve(__dirname, 'build'));
     },
     filename: (req, file, cb) => {
-        fs.readdir( __dirname + 'build', function(error, files) {  
+        fs.readdir( __dirname + '/build', function(error, files) {  
             var totalFiles = files.length; // return the number of files
             cb(null, totalFiles + '-' + file.originalname);
         });
