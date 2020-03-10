@@ -8,6 +8,12 @@ const mongoose = require('mongoose');
 const compression = require('compression');
 const cors = require('cors');
 const _ = require('lodash');
+const fs = require('fs');
+
+
+//file uploads
+const multer = require('multer');
+
 
 // socket.io
 const server = require('http').createServer(app);
@@ -27,11 +33,44 @@ require('./socket/private')(io);
 const authRoutes = require('./routes/auth');
 const confessionRoutes = require('./routes/confession');
 const messageRoutes = require('./routes/message');
+// const imageRoutes = require('./routes/image');
 
 const PORT = process.env.PORT || 8080;
 
-// app.use(bodyParser.urlencoded()); // x-www-form-urlencoded
-app.use(bodyParser.json()); // application/json
+
+const fileStorage = multer.diskStorage({
+    destination: (req, file, cb) => {
+        cb(null, 'uploads');
+    },
+    filename: (req, file, cb) => {
+        fs.readdir( './uploads', function(error, files) {  
+            var totalFiles = files.length; // return the number of files
+            cb(null, totalFiles + '-' + file.originalname);
+        });
+    }
+});
+
+const fileFilter = (req, file, cb) => {
+    if(file.mimetype === 'image/png' || file.mimetype === 'image/jpg' || file.mimetype === 'image/jpeg') {
+        cb(null, true);
+    } else {
+        cb({message: 'Unsupported File Format'}, false);
+    }
+};
+
+const upload = multer({
+    storage: fileStorage,
+    fileFilter: fileFilter,
+    limits: {
+        fileSize: 1024 * 1024 * 50
+    }
+});
+
+app.use(upload.single('file'));
+
+
+app.use(bodyParser.urlencoded({extended: true, limit: '50mb'})); // x-www-form-urlencoded
+app.use(bodyParser.json({limit: '50mb'})); // application/json
 // to use the /images folder in the frond end
 app.use('/images', express.static(path.join(__dirname, 'images')));
 
@@ -56,6 +95,7 @@ app.use(compression());
 app.use('/auth', authRoutes);
 app.use('/confessions', confessionRoutes);
 app.use('/messages', messageRoutes);
+// app.use('/images', imageRoutes);
 
 app.use((error, req, res, next) => {
     console.log(error);

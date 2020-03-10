@@ -52,6 +52,24 @@ const confessionSchema = new Schema({
         type: { type: String },
         coordinates: [],
     },
+    picVersion: {
+        type: String,
+        default: ''
+    },
+    picId: {
+        type: String,
+        default: ''
+    },
+    image: {
+        imgId: {
+            type: String,
+            default: ''
+        },
+        imgVersion: {
+            type: String,
+            default: ''
+        }
+    },
     createdAt: {
         type: Date,
         default: moment.tz(Date.now(), "Australia/Sydney")

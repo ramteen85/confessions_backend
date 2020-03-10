@@ -2,7 +2,18 @@ const User = require('../models/user');
 const Confession = require('../models/confession');
 const { validationResult } = require('express-validator');
 const jwt = require('jsonwebtoken');
+const fs = require('fs');
+const cloudinary = require('cloudinary');
 
+
+cloudinary.config({
+    cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
+    api_key: process.env.CLOUDINARY_API_KEY,
+    api_secret: process.env.CLOUDINARY_API_SECRET
+});
+
+
+// function to verity the token
 verifyToken = (token, key) => {
     try {
         return jwt.verify(token, key);
@@ -10,6 +21,39 @@ verifyToken = (token, key) => {
         return null;
     }
 }
+
+// upload to cloudinary
+uploads = (file, folder) => {
+    return new Promise(resolve => {
+        cloudinary.uploader.upload(file, (result) => {
+            resolve({
+                url: result.url,
+                id: result.public_id,
+                version: result.version
+            });
+        }, {
+            resource_type: "auto",
+            folder: folder
+        });
+    });
+}
+
+// function to encode file data to base64 encoded string
+function base64_encode(file) {
+    // read binary data
+    var bitmap = fs.readFileSync(file);
+    // convert binary data to base64 encoded string
+    return Buffer.from(bitmap).toString('base64');
+}
+
+// function to create file from base64 encoded string
+// function base64_decode(base64str, file) {
+//     // create buffer object from base64 encoded string, it is important to tell the constructor that the string is base64 encoded
+//     var bitmap = Buffer.from(base64str, 'base64');
+//     // write buffer to file
+//     fs.writeFileSync(file, bitmap);
+//     console.log('******** File created from base64 encoded string ********');
+// }
 
 function distance(lat1, lon1, lat2, lon2, unit) {
 	if ((lat1 == lat2) && (lon1 == lon2)) {
@@ -35,19 +79,23 @@ function distance(lat1, lon1, lat2, lon2, unit) {
 
 exports.createConfession = async(req, res, next) => {
 
+    // todo: create loading screen / progress bar on frontend
+
     // get token
-    token = req.body.confData.token;
+    token = req.body.token;
 
     // verify token
     let decodedToken = verifyToken(token, process.env.SECRET_KEY);
 
-    if(!decodedToken) {
+    if(decodedToken === null) {
         res.status(200).json({
             message: 'invalid token'
         });
     }
 
     try {
+
+        // console.log(req.file);
 
         // form validation
         const errors = validationResult(req);
@@ -58,23 +106,44 @@ exports.createConfession = async(req, res, next) => {
             throw error;
         }
 
-        //get image
-        imageUrl = req.body.confData.imageUrl;
+        let result;
 
         // if imageUrl is blank, give it a default value
-        if(imageUrl === '' || !imageUrl) {
+        if(req.file === undefined) {
+            // image does not exist. set default image URL
             imageUrl = 'https://www.bigstockphoto.com/blog/wp-content/uploads/2014/01/66006-bigstock-confession-concept-42406879.jpg';
+            result = {
+                id: '',
+                version: ''
+            };
+        }else {
+            console.log(req.file);
+            // get string encoding of file
+            const fileString = base64_encode(req.file.path);
+
+            // initialise uploader
+            const uploader = async(path) => await uploads(path, 'confessions');
+
+            // image exists - handle image upload here
+            result = await uploader(req.file.path);
+
+            // delete file
+            fs.unlinkSync(req.file.path);
+
+            // save cloudinary image url
+            imageUrl = result.url;
+
         }
 
         // get user
-        let usr = await User.findById(decodedToken.userId );
+        let usr = await User.findById(decodedToken.userId);
 
         // get the other variables
         confData = {
             imageUrl: imageUrl,
-            categories: req.body.confData.categories,
-            subject: req.body.confData.subject,
-            post: req.body.confData.post,
+            categories: req.body.categories,
+            subject: req.body.subject,
+            post: req.body.post,
             creator: decodedToken.userId,
             location: usr.location.coordinates
         };
@@ -85,10 +154,14 @@ exports.createConfession = async(req, res, next) => {
             subject: confData.subject,
             categories: confData.categories,
             content: confData.post,
-            imageUrl: confData.imageUrl,
+            imageUrl: confData.imageUrl, // have to work on this
             location: {
                 type: "Point",
                 coordinates: confData.location
+            },
+            image: {
+                imgId: result.id,
+                imgVersion: result.version
             }
             // createdAt: moment.tz(Date.now(), "Australia/Sydney")
         });
@@ -105,6 +178,7 @@ exports.createConfession = async(req, res, next) => {
         await usr.save();
 
         // send signal back (will have to restrict data later)
+        console.log('success!');
 
         res.status(200).json({
             message: 'Confession created!',
