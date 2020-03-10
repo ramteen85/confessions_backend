@@ -66,13 +66,13 @@ const upload = multer({
     }
 });
 
-app.use(upload.single('file'));
+app.use(upload.any());
 
 
 app.use(bodyParser.urlencoded({extended: true, limit: '50mb'})); // x-www-form-urlencoded
 app.use(bodyParser.json({limit: '50mb'})); // application/json
 // to use the /images folder in the frond end
-app.use('/images', express.static(path.join(__dirname, 'images')));
+app.use('/images', express.static(path.join(__dirname, 'build')));
 
 
 
