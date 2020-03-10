@@ -40,7 +40,7 @@ const PORT = process.env.PORT || 8080;
 
 const fileStorage = multer.diskStorage({
     destination: (req, file, cb) => {
-        cb(null, 'uploads');
+        cb(null, path.resolve(__dirname, 'build'));
     },
     filename: (req, file, cb) => {
         fs.readdir( 'uploads', function(error, files) {  
