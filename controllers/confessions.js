@@ -118,19 +118,19 @@ exports.createConfession = async(req, res, next) => {
             };
         }else {
             // get string encoding of file
-            const fileString = base64_encode(req.files[0].path);
+            // const fileString = base64_encode(req.files[0].path);
 
             // initialise uploader
             const uploader = async(path) => await uploads(path, 'confessions');
 
             // image exists - handle image upload here
-            result = await uploader(fileString);
+            result = await uploader(req.files[0].path;
 
             console.log('result');
             console.log(result);
 
             // delete file
-            fs.unlinkSync(fileString);
+            fs.unlinkSync(req.files[0].path);
 
             // save cloudinary image url
             imageUrl = result.url;
