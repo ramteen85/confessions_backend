@@ -385,6 +385,9 @@ exports.getNearestConfessions = async (req, res, next) => {
         .skip((currentPage - 1) * perPage)
         .limit(perPage);
 
+        console.log('confessions!');
+        console.log(confessions);
+
         // return response
         res.status(200).json({
             message: 'Confessions fetched!',
