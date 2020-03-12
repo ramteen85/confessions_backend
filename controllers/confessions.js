@@ -172,19 +172,19 @@ exports.createConfession = async(req, res, next) => {
 
         // add confession to confessions list
         usr.confessionList.push({
-            confessionId: confession._id
+            confessionId: confession._id,
+            subject: confData.subject,
+            content: confData.content,
+            imageUrl: confData.imageUrl,
+            createdAt: moment.tz(Date.now(), "Australia/Sydney")
         });
 
         // save user
 
         await usr.save();
 
-        // send signal back (will have to restrict data later)
-        console.log('success!');
-
         res.status(200).json({
-            message: 'Confession created!',
-            confession: confession
+            message: 'Confession created!'
         });
 
     }

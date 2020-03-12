@@ -68,7 +68,11 @@ const userSchema = new Schema({
     },
     confessionList: [
         {
-            confessionId: {type: Schema.ObjectId, ref: "Confession"}
+            confessionId: {type: Schema.ObjectId, ref: "Confession"},
+            subject: { type: String },
+            content: { type: String },
+            imageUrl: { type: String },
+            createdAt: { type: Date, default: moment.tz(Date.now(), "Australia/Sydney") }
         },
     ],
     distance: {
